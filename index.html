@@ -24,7 +24,7 @@ button.action{padding:8px 16px;background:#b36b2f;border:none;border-radius:8px;
 button.gray{background:#777}
 </style></head><body>
 
-<header>🌳 Digital Banshawali
+<header>🌳 रसुवाली पौडेल-विद्याधर बंशको बंशावली
 <label><input type="checkbox" id="togglePhoto" checked onchange="togglePhotos()"> फोटो देखाउने</label>
 <button onclick="openHelp()" style="margin-left:auto;" class="action">Help</button>
 <button onclick="openFAQ()" class="action">FAQ</button>
@@ -113,6 +113,7 @@ function loadViewTab(p){
  <h3>मुल विवरण</h3>
  <p><b>नाम:</b> ${p.name||"-"}</p>
  <p><b>लिङ्ग:</b> ${p.gender||"-"}</p>
+ <p><b>बैबाहिक अवस्था:</b> ${p.marital||"-"}</p>
  <p><b>स्थिति:</b> ${p.status==="dead"?"⚫ दिवंगत":"🟢 जीवित"}</p>
  <p><b>जन्म:</b> ${p.birth||"-"}</p>
  <p><b>विवाह:</b> ${p.marriage||"-"}</p>

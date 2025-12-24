@@ -1,332 +1,40 @@
-<!DOCTYPE html><html lang="ne"><head><meta charset="UTF-8"/><meta name="viewport"content="width=device-width,initial-scale=1"/><title>Digital Banshawali – Rasuwa Paudel</title><style>
-body{margin:0;font-family:system-ui, sans-serif;background:#f5f2ea;overflow:hidden}
-header{height:52px;background:#f4efe6;display:flex;align-items:center;padding:0 16px;font-weight:600;gap:16px;border-bottom:1px solid #e6dfd6}
-#treeWrap{width:100vw;height:calc(100vh - 52px);background:#f9f7f2;overflow:hidden;cursor:grab;position:relative}
-#tree{position:absolute;transform-origin:0 0}
-.tree-node{background:#fff;border:1px solid #c9b8a6;border-radius:12px;padding:10px;min-width:150px;text-align:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.05)}
-.tree-node img{width:60px;height:60px;border-radius:50%;object-fit:cover;background:#ddd;margin-bottom:6px;pointer-events:none}
-.tree-node.alive::after{content:"🟢";display:block;font-size:18px;margin-top:4px}
-.tree-node.dead::after{content:"⚫";display:block;font-size:18px;margin-top:4px}
-.gen{font-size:11px;background:#dfd7cd;border-radius:10px;padding:2px 6px;margin-top:4px;display:inline-block}
-.row{display:flex;gap:28px;justify-content:center;margin-bottom:16px}
-.children{display:flex;gap:28px;justify-content:center}
-.hide-photos .tree-node img{display:none}
-.hide-photos .tree-node{padding-top:14px}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40}
-.modal-box{background:#fff;max-width:780px;margin:20px auto;padding:16px;border-radius:14px;max-height:92vh;overflow-y:auto}
-.modal-tabs{display:flex;gap:8px;margin-bottom:16px}
-.modal-tabs button{background:#e3ddd6;padding:6px 14px;border:none;border-radius:8px;cursor:pointer}
-.modal-tabs button.active{background:#af7c46;color:#fff}
-label{font-size:13px;color:#555;font-weight:600}
-input,select,textarea{width:100%;padding:8px;margin-top:6px;margin-bottom:12px;border:1px solid #ccc;border-radius:6px;background:#fff}
-textarea{min-height:70px}
-button.action{padding:8px 16px;background:#b36b2f;border:none;border-radius:8px;color:white;cursor:pointer;margin-top:6px}
-button.gray{background:#777}
-</style></head><body>
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+<meta charset="UTF-8">
+<title>Tree Node Fix Demo</title>
+<style>
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 15px;
+  width: fit-content;
+  margin: 10px;
+}
+.life-sign { font-size: 14px; }
+.node-name { font-weight: 600; }
+.gen { font-size: 12px; color: #666; }
+</style>
+</head>
+<body>
+<h2>Tree Node Preview</h2>
 
-<header>🌳 रसुवाली पौडेल-विद्याधर बंशको बंशावली
-<label><input type="checkbox" id="togglePhoto" checked onchange="togglePhotos()"> फोटो देखाउने</label>
-<button onclick="openHelp()" style="margin-left:auto;" class="action">Help</button>
-<button onclick="openFAQ()" class="action">FAQ</button>
-<button onclick="exportJSON()" class="action">Backup</button>
-<input type="file" onchange="importJSON(event)" style="display:none" id="importer">
-<button onclick="document.getElementById('importer').click()" class="action gray">Restore</button>
-</header>
-
-<div id="treeWrap"><div id="tree"></div></div>
-
-<div class="modal" id="modal"><div class="modal-box">
-<h2 id="personNameView"></h2>
-<div class="modal-tabs">
-<button id="tabViewBtn" onclick="setTab('view')">View</button>
-<button id="tabEditBtn" onclick="setTab('edit')">Edit</button>
-<button id="tabRelationBtn" onclick="setTab('rel')">Relations</button>
+<div class="tree-node alive">
+  <span class="life-sign">🟢</span>
+  <span class="node-name">धर्मदत्त पौडेल</span>
+  <span class="gen">(१)</span>
 </div>
-<div id="tabView"></div>
-<div id="tabEdit"style="display:none"></div>
-<div id="tabRel"style="display:none"></div>
-<button onclick="closeModal()"class="action gray"style="margin-top:20px">Close</button>
-</div></div>
 
-<script>
-let persons={},currentID=null,scale=1,offset={x:window.innerWidth/2-150,y:20};
-const gid=()=> "p"+Date.now();
-const saved=localStorage.getItem("banshawaliData");
-if(saved){persons=JSON.parse(saved);currentID=Object.keys(persons)[0];}
-else{
- let id=gid();
- persons[id]=blankPerson(id);
- persons[id].name="धर्मदत्त पौडेल";
- currentID=id; store();
-}
+<div class="tree-node dead">
+  <span class="life-sign">⚫</span>
+  <span class="node-name">यदुकुमार पौडेल</span>
+  <span class="gen">(२)</span>
+</div>
 
-function store(){localStorage.setItem("banshawaliData",JSON.stringify(persons));}
-
-/* TREE */
-function renderTree(){tree.innerHTML="";tree.appendChild(buildTree(findRoot(),1));applyTransform();}
-function findRoot(){return Object.values(persons).find(p=>!p.father&&!p.mother)?.id||currentID;}
-function buildTree(id,gen){
- let p=persons[id]; if(!p)return document.createElement("div");
- let wrap=document.createElement("div");
- let row=document.createElement("div"); row.className="row";
- row.appendChild(nodeCard(p,gen));
- (p.spouses||[]).forEach(s=>{if(persons[s])row.appendChild(nodeCard(persons[s],gen));});
- wrap.appendChild(row);
- let kids=(p.children||[]).map(cid=>persons[cid]).filter(Boolean);
- if(kids.length){
-   let cw=document.createElement("div"); cw.className="children";
-   kids.forEach(k=>cw.appendChild(buildTree(k.id,gen+1)));
-   wrap.appendChild(cw);
- }
- return wrap;
-}
-function nodeCard(p,gen){
- let d=document.createElement("div");
- d.className="tree-node "+(p.status==="dead"?"dead":"alive");
- d.innerHTML=`<img src="${p.photo||'https://via.placeholder.com/80'}"><div>${p.name||"-"}</div><div class='gen'>${gen} पुस्ता</div>`;
- d.onclick=()=>openModal(p.id);
- return d;
-}
-
-treeWrap.onwheel=e=>{scale+=e.deltaY*-0.001;scale=Math.min(Math.max(.4,scale),2);applyTransform()}
-let drag=false,start={};
-treeWrap.onmousedown=e=>{drag=true;start={x:e.clientX-offset.x,y:e.clientY-offset.y}}
-treeWrap.onmousemove=e=>{if(drag){offset.x=e.clientX-start.x;offset.y=e.clientY-start.y;applyTransform();}}
-treeWrap.onmouseup=()=>drag=false;
-function applyTransform(){tree.style.transform=`translate(${offset.x}px,${offset.y}px) scale(${scale})`}
-function togglePhotos(){tree.classList.toggle("hide-photos",!togglePhoto.checked)}
-
-/* MODAL */
-function openModal(id){
- currentID=id; let p=persons[id];
- personNameView.innerText=p.name||"-";
- loadViewTab(p); loadEditTab(p); loadRelationTab(p);
- setTab("view"); modal.style.display="block";
-}
-function closeModal(){modal.style.display="none"}
-
-/* VIEW TAB */
-function loadViewTab(p){
- let parents=[]; if(p.father)parents.push(link(p.father)); if(p.mother)parents.push(link(p.mother));
- let kids=(p.children||[]).map(link).join(" , "); let spouse=(p.spouses||[]).map(link).join(" , ");
- tabView.innerHTML=`
- <h3>मुल विवरण</h3>
- <p><b>नाम:</b> ${p.name||"-"}</p>
- <p><b>लिङ्ग:</b> ${p.gender||"-"}</p>
- <p><b>बैबाहिक अवस्था:</b> ${p.marital||"-"}</p>
- <p><b>स्थिति:</b> ${p.status==="dead"?"⚫ दिवंगत":"🟢 जीवित"}</p>
- <p><b>जन्म:</b> ${p.birth||"-"}</p>
- <p><b>विवाह:</b> ${p.marriage||"-"}</p>
- <p><b>मृत्यु:</b> ${p.death||"-"}</p>
-
- <h3>ठेगाना</h3>
- <p><b>मूल:</b> ${fmt(p.address.origin)}</p>
- <p><b>स्थायी:</b> ${fmt(p.address.permanent)}</p>
- <p><b>हाल:</b> ${fmt(p.address.current)}</p>
-
- <h3>शिक्षा / रोजगार</h3>
- <p><b>शिक्षा:</b>${p.profile.education||"-"}</p>
- <p><b>रोजगार:</b>${p.profile.employment_status||"-"}</p>
- <p><b>विवरण:</b>${p.profile.employment_detail||"-"}</p>
- <p><b>अपाङ्गता:</b>${p.profile.disability_status||"-"}</p>
-
- <h3>सम्पर्क</h3>
- <p><b>मोबाइल:</b>${p.contact.mobile||"-"}</p>
- <p><b>Alt:</b>${p.contact.mobile_alt||"-"}</p>
- <p><b>फोन:</b>${p.contact.home_phone||"-"}</p>
- <p><b>Email:</b>${p.contact.email||"-"}</p>
-
- <h3>Social</h3>
- <p><b>Facebook:</b>${dash(p.contact.facebook)}</p>
- <p><b>WhatsApp:</b>${p.contact.whatsapp||"-"}</p>
- <p><b>Viber:</b>${p.contact.viber||"-"}</p>
- <p><b>Website:</b>${dash(p.contact.website)}</p>
-
- <h3>Relations</h3>
- <p><b>Parents:</b>${parents.join(" , ")||"-"}</p>
- <p><b>Spouse:</b>${spouse||"-"}</p>
- <p><b>Children:</b>${kids||"-"}</p>
-
- <h3>Biography</h3>
- <p>${p.profile.biography||"-"}</p>
- `;
-}
-function link(id){return `<a href="#" onclick="openModal('${id}')">${persons[id].name}</a>`}
-function fmt(a){return `${a.tole||""}, ${a.rm||""}, ${a.district||""}, ${a.province||""}, ${a.country||""}`}
-function dash(x){return x?`<a target="_blank"href="${x}">${x}</a>`:"-"}
-
-/* EDIT */
-function loadEditTab(p){
- tabEdit.innerHTML=`
- <label>नाम</label><input id="e_name"value="${p.name||""}">
- <label>फोटो URL</label><input id="e_photo"value="${p.photo||""}">
- <label>लिङ्ग</label><select id="e_gender">
-   <option ${p.gender==="पुरुष"?"selected":""}>पुरुष</option>
-   <option ${p.gender==="महिला"?"selected":""}>महिला</option>
- </select>
- <label>स्थिति</label><select id="e_status"onchange="tDeath()">
-   <option value="alive"${p.status==="alive"?"selected":""}>जीवित</option>
-   <option value="dead"${p.status==="dead"?"selected":""}>दिवंगत</option>
- </select>
- <label>जन्म</label><input id="e_birth"value="${p.birth||""}">
- <label>विवाह</label><input id="e_marriage"value="${p.marriage||""}">
- <div id="deathBox"style="display:${p.status==="dead"?"block":"none"}">
-   <label>मृत्यु</label><input id="e_death"value="${p.death||""}">
- </div>
-
- ${addr("origin",p)} ${addr("permanent",p)} ${addr("current",p)}
-
- <label>शिक्षा</label><input id="e_education"value="${p.profile.education||""}">
- <label>रोजगार</label><input id="e_employment"value="${p.profile.employment_status||""}">
- <label>विवरण</label><input id="e_employment_detail"value="${p.profile.employment_detail||""}">
- <label>अपाङ्गता</label><input id="e_disability"value="${p.profile.disability_status||""}">
-
- <label>मोबाइल</label><input id="e_mobile"value="${p.contact.mobile||""}">
- <label>Alt मोबाइल</label><input id="e_mobile_alt"value="${p.contact.mobile_alt||""}">
- <label>घर फोन</label><input id="e_home_phone"value="${p.contact.home_phone||""}">
- <label>Email</label><input id="e_email"value="${p.contact.email||""}">
- <label>Facebook</label><input id="e_facebook"value="${p.contact.facebook||""}">
- <label>WhatsApp</label><input id="e_whatsapp"value="${p.contact.whatsapp||""}">
- <label>Viber</label><input id="e_viber"value="${p.contact.viber||""}">
- <label>Website</label><input id="e_website"value="${p.contact.website||""}">
-
- <label>Biography</label><textarea id="e_bio">${p.profile.biography||""}</textarea>
-
- <button onclick="savePerson()"class="action">Save</button>
- `;
-}
-function addr(k,p){let a=p.address[k];return`
- <h3>${k}</h3>
- <label>देश</label><input id="${k}_country"value="${a.country}">
- <label>प्रदेश</label><input id="${k}_province"value="${a.province}">
- <label>जिल्ला</label><input id="${k}_district"value="${a.district}">
- <label>RM</label><input id="${k}_rm"value="${a.rm}">
- <label>Ward</label><input id="${k}_ward"value="${a.ward}">
- <label>टोल</label><input id="${k}_tole"value="${a.tole}">
-`}
-
-function tDeath(){deathBox.style.display=(e_status.value==="dead")?"block":"none"}
-
-function savePerson(){
- let p=persons[currentID];
- p.name=e_name.value; p.photo=e_photo.value; p.gender=e_gender.value;
- p.status=e_status.value; p.birth=e_birth.value; p.marriage=e_marriage.value;
- p.death=(p.status==="dead")?e_death.value:"";
- ["origin","permanent","current"].forEach(k=>{
-   p.address[k]={country:eval(k+"_country").value,province:eval(k+"_province").value,
-   district:eval(k+"_district").value,rm:eval(k+"_rm").value,
-   ward:eval(k+"_ward").value,tole:eval(k+"_tole").value};
- });
- p.profile.education=e_education.value;
- p.profile.employment_status=e_employment.value;
- p.profile.employment_detail=e_employment_detail.value;
- p.profile.disability_status=e_disability.value;
- p.contact.mobile=e_mobile.value;
- p.contact.mobile_alt=e_mobile_alt.value;
- p.contact.home_phone=e_home_phone.value;
- p.contact.email=e_email.value;
- p.contact.facebook=e_facebook.value;
- p.contact.whatsapp=e_whatsapp.value;
- p.contact.viber=e_viber.value;
- p.contact.website=e_website.value;
- p.profile.biography=e_bio.value;
- store();renderTree();openModal(currentID);
-}
-
-/* RELATIONS */
-function loadRelationTab(p){
- tabRel.innerHTML=`
- <h3>Parents</h3>
- <p>Father: ${p.father?persons[p.father].name:"-"}</p>
- <button class='action'onclick="addFather()">Add Father</button>
- <p>Mother: ${p.mother?persons[p.mother].name:"-"}</p>
- <button class='action'onclick="addMother()">Add Mother</button>
-
- <h3>Spouse</h3>
- <p>${(p.spouses||[]).map(s=>persons[s].name).join(" , ")||"-"}</p>
- <button class='action'onclick="addPartner()">Add Partner</button>
-
- <h3>Children</h3>
- <p>${(p.children||[]).map(c=>persons[c].name).join(" , ")||"-"}</p>
- <button class='action'onclick="addChild()">Add Child</button>
- `;
-}
-
-function blankPerson(id){return{
- id,id,name:"",gender:"पुरुष",status:"alive",photo:"",
- birth:"",marriage:"",death:"",marital_status:"single",
- address:{origin:{},permanent:{},current:{}},
- profile:{biography:"",education:"",employment_status:"",
- employment_detail:"",disability_status:""},
- contact:{mobile:"",mobile_alt:"",home_phone:"",email:"",
- facebook:"",whatsapp:"",viber:"",website:""},
- father:null,mother:null,spouses:[],children:[]
-}}
-
-function addFather(){let id=gid();persons[id]=blankPerson(id);persons[currentID].father=id;persons[id].children.push(currentID);store();renderTree();openModal(id);}
-function addMother(){let id=gid();persons[id]=blankPerson(id);persons[currentID].mother=id;persons[id].children.push(currentID);store();renderTree();openModal(id);}
-function addPartner(){
- let id=gid();persons[id]=blankPerson(id);
- persons[currentID].spouses.push(id);
- persons[id].spouses.push(currentID);
- store();renderTree();openModal(id);
-}
-function addChild(){
- let id=gid();persons[id]=blankPerson(id);
- let p=persons[currentID];
- if(p.gender==="पुरुष"){persons[id].father=currentID;
-   if(p.spouses[0]){persons[id].mother=p.spouses[0];persons[p.spouses[0]].children.push(id);}
- }
- else {persons[id].mother=currentID;
-   if(p.spouses[0]){persons[id].father=p.spouses[0];persons[p.spouses[0]].children.push(id);}
- }
- p.children.push(id);store();renderTree();openModal(id);
-}
-
-/* TABS */
-function setTab(t){
- tabView.style.display=t==="view"?"block":"none";
- tabEdit.style.display=t==="edit"?"block":"none";
- tabRel.style.display=t==="rel"?"block":"none";
- tabViewBtn.classList.toggle("active",t==="view");
- tabEditBtn.classList.toggle("active",t==="edit");
- tabRelationBtn.classList.toggle("active",t==="rel");
-}
-
-/* BACKUP */
-function exportJSON(){
- let data=JSON.stringify(persons);
- let blob=new Blob([data],{type:"application/json"});
- let url=URL.createObjectURL(blob);
- let a=document.createElement("a");
- a.href=url;a.download="Banshawali_Backup.json";a.click();
-}
-function importJSON(e){
- let f=e.target.files[0];let r=new FileReader();
- r.onload=x=>{persons=JSON.parse(x.target.result);store();renderTree();};
- r.readAsText(f);
-}
-
-/* HELP / FAQ */
-function openHelp(){let html=`<h2>Help / About</h2>
-<p>यो Rasua Paudel Digital Banshawali, परिवार इतिहास, सम्बन्ध, शिक्षा, रोजगारी, बसोबास सबै ट्र्याक गर्न निर्मित हो।</p>
-<h3>सहयोग</h3>
-<p>Esewa / Global IME QR Available</p>
-<img src="https://i.imgur.com/0nqUqQZ.png" width="200">
-<img src="https://i.imgur.com/5bG7vhP.png" width="200">
-<h3>सम्पर्क</h3>
-<p>WhatsApp: 9843508470</p>
-`;popup(html);}
-function openFAQ(){let html=`<h2>FAQ</h2>
-<p><b>Digital Banshawali के हो?</b><br>यी सबै पुस्ताको इतिहास सुरक्षित राख्ने प्रणाली हो।</p>
-<p><b>डेटा कहाँ सुरक्षित?</b><br>Your Browser (LocalStorage)</p>
-<p><b>Backup/Restore?</b><br>JSON Export/Import</p>
-`;popup(html);}
-function popup(inner){
- let w=window.open();w.document.write(`<body style='font-family:system-ui;padding:20px;'>${inner}</body>`);
-}
-
-/* INIT */
-renderTree();
-</script>
-</body></html>
+</body>
+</html>

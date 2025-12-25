@@ -1,83 +1,127 @@
 <!DOCTYPE html>
 <html lang="ne">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Digital Banshawali – Rasuwa Paudel (Entry Ready)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digital Banshawali – Public</title>
+
 <style>
-body{margin:0;font-family:system-ui, sans-serif;background:#f5f2ea;overflow:hidden}
-header{height:52px;background:#f4efe6;display:flex;align-items:center;padding:0 16px;font-weight:600;gap:12px;border-bottom:1px solid #e6dfd6}
-header button{padding:6px 12px;border:0;border-radius:8px;background:#b36b2f;color:#fff;cursor:pointer}
-#treeWrap{width:100vw;height:calc(100vh - 52px);background:#f9f7f2;overflow:hidden;cursor:grab;position:relative}
-#tree{position:absolute;transform-origin:0 0}
-.tree-node{background:#fff;border:1px solid #c9b8a6;border-radius:12px;padding:10px;min-width:150px;text-align:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.05)}
-.tree-node img{width:60px;height:60px;border-radius:50%;object-fit:cover;background:#ddd;margin-bottom:6px;pointer-events:none}
-.tree-node.alive::after{content:"🟢";display:inline-block;margin-left:6px}
-.tree-node.dead::after{content:"⚫";display:inline-block;margin-left:6px}
-.gen{font-size:11px;background:#dfd7cd;border-radius:10px;padding:2px 6px;margin-top:4px;display:inline-block}
-.row{display:flex;gap:28px;justify-content:center;margin-bottom:16px}
-.children{display:flex;gap:28px;justify-content:center}
-.hide-photos .tree-node img{display:none}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40}
-.modal-box{background:#fff;max-width:820px;margin:20px auto;padding:16px;border-radius:14px;max-height:92vh;overflow-y:auto}
-.modal-tabs{display:flex;gap:8px;margin-bottom:12px}
-.modal-tabs button{background:#e3ddd6;padding:6px 14px;border:none;border-radius:8px;cursor:pointer}
-.modal-tabs button.active{background:#af7c46;color:#fff}
-label{font-size:13px;color:#555;font-weight:600}
-input,select,textarea{width:100%;padding:8px;margin-top:6px;margin-bottom:10px;border:1px solid #ccc;border-radius:6px;background:#fff}
-textarea{min-height:70px}
-button.action{padding:8px 16px;background:#b36b2f;border:none;border-radius:8px;color:white;cursor:pointer;margin-top:6px}
-button.gray{background:#777}
-@media print{
- header,.modal{display:none!important}
- #treeWrap{position:static;height:auto;overflow:visible}
- #tree{transform:none!important}
- .tree-node{box-shadow:none;border:1px solid #000;min-width:130px;font-size:11px}
- .tree-node img{display:none}
- .row,.children{gap:16px}
+body{margin:0;font-family:system-ui;background:#f6f3ec}
+header{
+  display:flex;gap:8px;align-items:center;
+  padding:10px 14px;background:#efe8dc;
+  border-bottom:1px solid #d6c9b6;font-weight:600
 }
+header button{background:#b36b2f;color:#fff;border:0;
+  padding:6px 12px;border-radius:6px;cursor:pointer}
+header button.gray{background:#777}
+#treeWrap{height:calc(100vh - 56px);overflow:auto;padding:20px}
+.node{
+  display:inline-block;
+  border:1px solid #cbb79f;
+  border-radius:10px;
+  padding:8px 12px;
+  background:#fff;
+  margin:6px;
+  cursor:pointer;
+}
+.node.alive::after{content:" 🟢"}
+.node.dead::after{content:" ⚫"}
+.hide-photo img{display:none}
+.node img{width:50px;height:50px;border-radius:50%;display:block;margin:auto}
+.row{text-align:center}
 </style>
 </head>
+
 <body>
+
 <header>
 🌳 Digital Banshawali
-<label><input type="checkbox" id="togglePhoto" checked onchange="togglePhotos()"> फोटो</label>
+<label style="font-weight:normal">
+<input type="checkbox" checked onchange="togglePhoto(this)"> फोटो
+</label>
+
 <button onclick="printTree()">Print / PDF</button>
-<button onclick="exportJSON()">Backup</button>
-<input type="file" id="importer" style="display:none" onchange="importJSON(event)">
-<button onclick="document.getElementById('importer').click()" class="gray">Restore</button>
-<button onclick="openReports()">📊 Reports</button>
+<button onclick="backup()">Backup</button>
+<button onclick="restore()">Restore</button>
+<button onclick="reports()">Reports</button>
+
+<input id="restoreFile" type="file" hidden>
 </header>
 
-<div id="treeWrap"><div id="tree"></div></div>
-
-<div class="modal" id="modal">
-  <div class="modal-box">
-    <h2 id="personNameView"></h2>
-    <div class="modal-tabs">
-      <button id="tabViewBtn" onclick="setTab('view')">View</button>
-      <button id="tabEditBtn" onclick="setTab('edit')">Edit</button>
-      <button id="tabRelBtn" onclick="setTab('rel')">Relations</button>
-    </div>
-    <div id="tabView"></div>
-    <div id="tabEdit" style="display:none"></div>
-    <div id="tabRel" style="display:none"></div>
-    <button onclick="closeModal()" class="action gray">Close</button>
-  </div>
-</div>
-
-<div id="reportsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:60">
-  <div style="background:#fff; max-width:900px; margin:20px auto; padding:20px; border-radius:14px; max-height:92vh; overflow:auto">
-    <h2>📊 Digital Banshawali Reports</h2>
-    <div id="reportSummary" style="margin:12px 0;font-weight:600"></div>
-    <div id="reportTables"></div>
-    <button onclick="closeReports()" class="gray">Close</button>
-  </div>
+<div id="treeWrap">
+  <div id="tree"></div>
 </div>
 
 <script>
-// JS intentionally omitted for brevity in this retry header.
-// The full JS logic is identical to the previously shared version.
+/* ---------------- DATA ---------------- */
+let persons = JSON.parse(localStorage.getItem("banshawali")||"{}");
+
+if(Object.keys(persons).length===0){
+  let id="p1";
+  persons[id]={id,name:"धर्मदत्त पौडेल",status:"alive",children:[]};
+  localStorage.setItem("banshawali",JSON.stringify(persons));
+}
+
+/* ---------------- TREE ---------------- */
+function render(){
+  tree.innerHTML="";
+  Object.values(persons).forEach(p=>{
+    let d=document.createElement("div");
+    d.className="node "+(p.status==="dead"?"dead":"alive");
+    d.innerHTML=`${p.name}`;
+    d.onclick=()=>alert("Public view only");
+    tree.appendChild(d);
+  });
+}
+render();
+
+/* ---------------- ACTIONS ---------------- */
+function togglePhoto(cb){
+  tree.classList.toggle("hide-photo",!cb.checked);
+}
+
+function printTree(){
+  document.body.classList.add("hide-photo");
+  window.print();
+  document.body.classList.remove("hide-photo");
+}
+
+function backup(){
+  let blob=new Blob([JSON.stringify(persons,null,2)],{type:"application/json"});
+  let a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="banshawali_backup.json";
+  a.click();
+}
+
+function restore(){
+  restoreFile.click();
+  restoreFile.onchange=e=>{
+    let r=new FileReader();
+    r.onload=x=>{
+      persons=JSON.parse(x.target.result);
+      localStorage.setItem("banshawali",JSON.stringify(persons));
+      render();
+    };
+    r.readAsText(e.target.files[0]);
+  };
+}
+
+function reports(){
+  let total=Object.keys(persons).length;
+  let alive=Object.values(persons).filter(p=>p.status!=="dead").length;
+  alert(`कुल व्यक्ति: ${total}\nजीवित: ${alive}`);
+}
+
+/* ---------------- HASH SHARE ---------------- */
+if(location.hash){
+  let id=location.hash.replace("#","");
+  if(persons[id]) alert("Share link: "+persons[id].name);
+}
+
+console.log("Digital Banshawali loaded OK");
 </script>
+
 </body>
 </html>
